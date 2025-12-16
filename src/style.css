@@ -1,0 +1,416 @@
+:root {
+  /* ============================================================================
+   * GAMEBOY COLOR PALETTE
+   * ============================================================================ */
+  --gb-primary: #9bbc0f;
+  /* Light Green */
+  --gb-secondary: #8bac0f;
+  /* Medium Green */
+  --gb-dark: #0f380f;
+  /* Darkest Green */
+  --gb-accent: #306230;
+  /* Dark Green Accent */
+
+  --gb-shadow-dark: #0f380f;
+  --gb-shadow-light: #8bac0f;
+
+  /* Mappings for Components */
+  --bg-color: var(--gb-primary);
+  --text-main: var(--gb-dark);
+  --text-dim: var(--gb-accent);
+  --surface-border: var(--gb-dark);
+  --surface-color: var(--gb-primary);
+
+  --pad-gap: 10px;
+
+  font-family: 'Press Start 2P', monospace;
+  line-height: 1.5;
+  font-weight: 400;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: none;
+  /* Pixelated look */
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  /* No scroll */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  touch-action: manipulation;
+}
+
+/* Scanlines */
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(0deg,
+      rgba(0, 0, 0, 0.1),
+      rgba(0, 0, 0, 0.1) 1px,
+      transparent 1px,
+      transparent 2px);
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* App Shell - The Container */
+.app-shell {
+  width: 100%;
+  max-width: 600px;
+  /* Max phone width */
+  height: 100%;
+  /* Fill Screen */
+  max-height: 100vh;
+  /* Never exceed screen */
+
+  display: flex;
+  flex-direction: column;
+  /* Vertical Stack */
+  gap: 15px;
+  /* Spacing between sections */
+
+  padding: 15px;
+  /* Safe area padding */
+  position: relative;
+  z-index: 1;
+}
+
+/* --- SECTIONS (Vertical Stack) --- */
+
+/* 1. Header (Fixed Height) */
+.header-row {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.btn-retro {
+  height: 40px;
+  /* Reduced specific height */
+  background: var(--gb-primary);
+  border: 2px solid var(--gb-dark);
+  box-shadow: 4px 4px 0 var(--gb-dark);
+  color: var(--gb-dark);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.1s;
+  user-select: none;
+}
+
+.btn-retro:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--gb-dark);
+}
+
+.btn-retro:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-retro.active {
+  background: var(--gb-dark);
+  color: var(--gb-primary);
+  box-shadow: 2px 2px 0 var(--gb-secondary);
+  transform: translate(2px, 2px);
+}
+
+/* 2. Screen Area (Flexible) */
+.screen-container {
+  flex: 1 1 auto;
+  /* Allow shrinking */
+  min-height: 25vh;
+  /* Flexible min-height */
+
+  background-color: var(--gb-accent);
+  padding: 10px;
+  border-radius: 10px 10px 40px 10px;
+  box-shadow: 4px 4px 0 var(--gb-dark);
+  border: 2px solid var(--gb-dark);
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  /* Gap between sliders, visualizer, log */
+}
+
+/* 2a. Top: Sliders */
+.screen-sliders {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: space-between;
+  gap: 5px;
+  padding-bottom: 5px;
+  border-bottom: 1px dashed var(--gb-primary);
+}
+
+.slider-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.slider-label {
+  font-size: 6px;
+  color: var(--gb-primary);
+  margin-bottom: 2px;
+}
+
+.retro-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 10px;
+  background: var(--gb-dark);
+  outline: none;
+  border: 1px solid var(--gb-primary);
+}
+
+.retro-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  background: var(--gb-primary);
+  cursor: pointer;
+  border: 1px solid var(--gb-dark);
+}
+
+/* 2b. Middle: Visualizer */
+.screen-visualizer {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gb-dark);
+  border: 4px solid var(--gb-primary);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.screen-visualizer canvas {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  /* Important for retro look */
+  opacity: 0.8;
+  z-index: 1;
+  object-fit: contain;
+  mix-blend-mode: screen;
+  filter: contrast(1.2) brightness(1.2);
+}
+
+/* 2c. Bottom: Terminal Log */
+.screen-terminal {
+  flex: 0 0 20px;
+  /* Fixed small height */
+  font-size: 8px;
+  color: var(--gb-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-top: 2px;
+  border-top: 1px dashed var(--gb-primary);
+  opacity: 0.8;
+}
+
+
+/* 3. Transport Bar (Fixed Height) */
+.transport-bar {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  padding: 0;
+  border: none;
+}
+
+.transport-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.btn-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 14px;
+}
+
+.btn-small {
+  height: 30px;
+  font-size: 8px;
+  padding: 0 10px;
+}
+
+.bpm-display {
+  background: var(--gb-dark);
+  color: var(--gb-primary);
+  padding: 5px 10px;
+  font-size: 10px;
+  border: 2px solid var(--gb-dark);
+  height: 30px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.bpm-display:active {
+  background: var(--gb-primary);
+  color: var(--gb-dark);
+}
+
+/* Red LED */
+.red-led.active {
+  background-color: #ff3333;
+  color: white;
+  box-shadow: 0 0 10px #ff0000;
+  border-color: #990000;
+}
+
+.blink {
+  animation: blinker 1s linear infinite;
+}
+
+@keyframes blinker {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* 4. Pad Grid (FLEXIBLY GROW TO FILL REST) */
+.pad-grid {
+  flex: 0 0 auto;
+  /* Stop growing, fixed height based on content/min-height */
+  /* Or make it minimal height? */
+  /* User wants "More space for screen". So Screen grows, Grid shrinks or stays fixed. */
+
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  /* 4 cols x 4 rows */
+  gap: 6px;
+
+  min-height: 120px;
+  /* Reduced height for pads */
+  margin-top: auto;
+  /* Push to bottom if needed? No, flex stack does it. */
+}
+
+/* Container Drag Feedback */
+.pad-grid.drag-over-container {
+  border: 2px dashed #fff;
+  background: rgba(15, 56, 15, 0.8);
+  /* Dark tint */
+  box-shadow: 0 0 20px #fff;
+}
+
+.drum-pad {
+  width: 100%;
+  height: 100%;
+  /* Fill grid cell */
+  aspect-ratio: 1 / 1;
+  /* Enforce square shape */
+
+  background: var(--gb-primary);
+  border: 2px solid var(--gb-dark);
+  box-shadow: 3px 3px 0 var(--gb-dark);
+  /* Slightly smaller shadow */
+  color: var(--gb-dark);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  /* Smaller font */
+
+  /* Flex Centering */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  cursor: pointer;
+  transition: all 0.05s;
+}
+
+.drum-pad:active,
+.drum-pad.active {
+  background: var(--gb-dark);
+  color: var(--gb-primary);
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--gb-dark);
+}
+
+.drum-pad.empty {
+  opacity: 0.5;
+  box-shadow: none;
+  border-style: dashed;
+}
+
+.drum-pad.drag-over {
+  border-color: #fff !important;
+  background: var(--gb-dark) !important;
+  color: var(--gb-primary) !important;
+  border-style: dashed !important;
+}
+
+.drum-pad.recording {
+  border-color: #ff3333 !important;
+  background: #330000 !important;
+  color: #ff3333 !important;
+  animation: pulse-record 0.8s ease-in-out infinite;
+}
+
+@keyframes pulse-record {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.drum-pad.bank-selector {
+  border-color: #ffff00 !important;
+  background: var(--gb-secondary) !important;
+  box-shadow: 0 0 10px #ffff00 !important;
+}
+
+
+/* Progress Bar Removed */
+
+.key-hint {
+  font-size: 8px;
+  margin-top: 2px;
+  opacity: 0.6;
+}
