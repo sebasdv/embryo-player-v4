@@ -317,16 +317,31 @@ initButton.addEventListener('click', async () => {
 
   try {
     // 1. Init Persistence
+    console.log('[Init] 1. Persistence...');
     await persistence.init(); // NEW
 
+    console.log('[Init] 2. Audio...');
     await audioManager.init();
+
     // Init Visualizer
+    console.log('[Init] 3. Visualizer...');
     visualizer.init(canvas);
     visualizer.setDataProvider(() => audioManager.getAllWaveforms());
     visualizer.start();
 
     console.log('[MAIN] Visualizer initialized.');
-    await midiManager.init();
+    console.log('[Init] 4. MIDI...');
+
+    // Race MIDI init against a 2-second timeout to prevent freeze
+    const midiPromise = midiManager.init();
+    const timeoutPromise = new Promise<boolean>((resolve) =>
+      setTimeout(() => {
+        console.warn('[Init] MIDI init timed out. Continuing without MIDI.');
+        resolve(false);
+      }, 2000)
+    );
+
+    await Promise.race([midiPromise, timeoutPromise]);
 
     // Bindings
     midiManager.setNoteOnCallback(handleMidiNote);
@@ -336,9 +351,11 @@ initButton.addEventListener('click', async () => {
     isSystemReady = true;
 
     // 2. Load Settings from DB
+    console.log('[Init] 5. Load Settings...');
     await loadSettings();
 
     // 3. Load Samples (DB or Default)
+    console.log('[Init] 6. Load Samples...');
     await loadAllSamples();
 
     // setupDragAndDrop(); // Redundant, handled in generatePads

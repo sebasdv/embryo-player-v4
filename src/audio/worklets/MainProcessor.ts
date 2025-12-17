@@ -26,6 +26,9 @@ class MainProcessor extends AudioWorkletProcessor {
     private isMetronomeEnabled: boolean = false;
     private bpm: number = 120;
     private metronomePhase: number = 0;
+    private currentBeat: number = 0;
+    private clickFreq: number = 0.1; // Phase multiplier
+    private clickAmp: number = 0.3;
 
     // Metronome Timing
     private nextClickCountdown: number = 0;
@@ -57,6 +60,7 @@ class MainProcessor extends AudioWorkletProcessor {
                 this.isMetronomeEnabled = msg.payload;
                 if (this.isMetronomeEnabled) {
                     this.nextClickCountdown = 0; // Start immediately
+                    this.currentBeat = 0; // Reset bar
                 }
             }
         };
@@ -116,11 +120,12 @@ class MainProcessor extends AudioWorkletProcessor {
         if (this.metronomePhase > 0) {
             for (let i = 0; i < bufferSize; i++) {
                 if (this.metronomePhase > 0) {
-                    const clickSample = Math.sin(this.metronomePhase * 0.1) * 0.3;
+                    // Simple Sine Sweep
+                    const clickSample = Math.sin(this.metronomePhase * this.clickFreq) * this.clickAmp;
                     for (let ch = 0; ch < mixOutput.length; ch++) {
                         mixOutput[ch][i] += clickSample;
                     }
-                    this.metronomePhase -= 10; // Decay
+                    this.metronomePhase -= 15; // Faster Decay
                 } else {
                     break;
                 }
@@ -189,7 +194,19 @@ class MainProcessor extends AudioWorkletProcessor {
     }
 
     triggerMetronome() {
-        this.metronomePhase = 2000; // Single pitch
+        this.metronomePhase = 3000; // Reset length
+
+        if (this.currentBeat === 0) {
+            // Strong Beat (High Pitch, Louder)
+            this.clickFreq = 0.25;
+            this.clickAmp = 0.5;
+        } else {
+            // Weak Beat (Low Pitch, Softer)
+            this.clickFreq = 0.15;
+            this.clickAmp = 0.3;
+        }
+
+        this.currentBeat = (this.currentBeat + 1) % 4;
     }
 }
 

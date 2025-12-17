@@ -1,13 +1,4 @@
-interface EmbryoDB {
-    settings: {
-        key: string;
-        value: any;
-    };
-    samples: {
-        key: string;
-        value: Blob; // Or ArrayBuffer
-    };
-}
+
 
 export class PersistenceManager {
     private db: IDBDatabase | null = null;
