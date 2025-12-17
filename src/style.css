@@ -36,18 +36,17 @@
 /* SMALL SREEN OPTIMIZATIONS */
 @media (max-height: 750px) {
   :root {
-    --pad-gap: 4px;
+    --pad-gap: 2px;
   }
 
   .app-shell {
-    gap: 4px;
-    padding-top: max(5px, env(safe-area-inset-top));
-    padding-bottom: max(5px, env(safe-area-inset-bottom));
+    gap: 2px;
   }
 
   .screen-container {
-    padding: 5px;
-    gap: 2px;
+    padding: 4px;
+    border-radius: 4px;
+    /* Save corner space? */
   }
 
   .btn-retro {
@@ -113,34 +112,35 @@ body::after {
 
 /* App Shell - The Container */
 .app-shell {
+  /* NUCLEAR OPTION: Fixed positioning to guarantee viewport fit */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   width: 100%;
-  max-width: 600px;
   height: 100%;
-  height: 100dvh;
-  /* Fallback & Dynamic */
 
-  /* GRID LAYOUT - The only robust solution for mixed content */
+  /* GRID LAYOUT Refined */
   display: grid;
-  /* Rows: 
-     1. Header (auto)
-     2. Screen (flexible, e.g. 35%)
-     3. Transport (auto)
-     4. Pads (flexible, e.g. remainder) 
+  /* 
+     max-content: Shrink to fit content exactly (Header/Transport)
+     minmax(0, 1fr): Flexible space, allowed to shrink to 0 if needed (Screen)
+     minmax(0, 1.3fr): Flexible space, allowed to shrink (Pads). 1.3x screen size.
   */
-  grid-template-rows: auto minmax(150px, 3fr) auto minmax(120px, 4fr);
-  gap: 8px;
+  grid-template-rows: max-content minmax(0, 1fr) max-content minmax(0, 1.3fr);
+  gap: 4px;
 
-  /* Safe Area + Minimal Padding to ensure visibility */
-  padding-top: max(10px, env(safe-area-inset-top));
-  padding-bottom: max(10px, env(safe-area-inset-bottom));
-  padding-left: max(10px, env(safe-area-inset-left));
-  padding-right: max(10px, env(safe-area-inset-right));
-  margin: 0 auto;
+  /* Safe Area logic - Keeping it tight */
+  padding-top: max(5px, env(safe-area-inset-top));
+  padding-bottom: max(5px, env(safe-area-inset-bottom));
+  padding-left: max(5px, env(safe-area-inset-left));
+  padding-right: max(5px, env(safe-area-inset-right));
 
-  position: relative;
   z-index: 1;
   overflow: hidden;
-  /* Prevent scroll, relying on Grid to fit */
+  background-color: var(--bg-color);
+  /* Ensure bg covers edges */
 }
 
 /* --- SECTIONS (Vertical Stack) --- */
