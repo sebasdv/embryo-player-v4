@@ -3,7 +3,6 @@ import { AudioManager } from './audio/AudioManager'
 import { ThreeVisualizer } from './graphics/ThreeVisualizer'
 import { MidiManager } from './audio/MidiManager'
 import { PersistenceManager } from './system/PersistenceManager'
-import { ConstraintManager } from './system/ConstraintManager'
 
 // --- HTML Structure (Simplified for Sample Launcher) ---
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
@@ -310,9 +309,6 @@ function generatePads() {
 // Generate immediately for layout
 // Generate immediately for layout
 generatePads();
-
-// SCALE UI IMMEDIATELY
-new ConstraintManager("game-shell");
 
 // --- Main Init ---
 initButton.addEventListener('click', async () => {
