@@ -761,6 +761,12 @@ kitInput.addEventListener('change', async (e) => {
     }
     logStatus('KIT LOADED.');
   }
-  // Reset input
   kitInput.value = '';
+});
+
+// --- Window Resize Handling ---
+window.addEventListener('resize', () => {
+  if (canvas) {
+    visualizer.resize(canvas.clientWidth, canvas.clientHeight);
+  }
 });
