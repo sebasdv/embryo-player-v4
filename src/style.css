@@ -49,7 +49,11 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background-color: var(--gb-color);
+  align-items: center;
+  /* RESTORED CENTERING */
+  justify-content: center;
+  /* Ensure vertical center if app < screen */
+  background-color: var(--bg-color);
   color: var(--text-main);
   touch-action: manipulation;
 }
@@ -315,21 +319,17 @@ body::after {
 
 /* 4. Pad Grid (FLEXIBLY GROW TO FILL REST) */
 .pad-grid {
-  flex: 0 0 auto;
-  /* Stop growing, fixed height based on content/min-height */
-  /* Or make it minimal height? */
-  /* User wants "More space for screen". So Screen grows, Grid shrinks or stays fixed. */
-
+  flex: 1;
+  /* ALLOW GROWING to fill space */
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   grid-template-rows: repeat(4, 1fr);
   /* 4 cols x 4 rows */
   gap: 6px;
 
-  min-height: 120px;
-  /* Reduced height for pads */
-  margin-top: auto;
-  /* Push to bottom if needed? No, flex stack does it. */
+  min-height: 200px;
+  /* Increased min-height */
+  width: 100%;
 }
 
 /* Container Drag Feedback */
