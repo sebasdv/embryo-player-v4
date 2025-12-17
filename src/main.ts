@@ -3,10 +3,11 @@ import { AudioManager } from './audio/AudioManager'
 import { ThreeVisualizer } from './graphics/ThreeVisualizer'
 import { MidiManager } from './audio/MidiManager'
 import { PersistenceManager } from './system/PersistenceManager'
+import { ConstraintManager } from './system/ConstraintManager'
 
 // --- HTML Structure (Simplified for Sample Launcher) ---
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <div class="app-shell">
+  <div class="app-shell" id="game-shell">
     
     <!-- Top Row Buttons -->
     <div class="header-row">
@@ -319,6 +320,9 @@ initButton.addEventListener('click', async () => {
     // 1. Init Persistence
     console.log('[Init] 1. Persistence...');
     await persistence.init(); // NEW
+
+    // SCALE UI
+    new ConstraintManager("game-shell");
 
     console.log('[Init] 2. Audio...');
     await audioManager.init();
