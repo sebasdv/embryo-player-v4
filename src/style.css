@@ -50,9 +50,8 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* RESTORED CENTERING */
-  justify-content: center;
-  /* Ensure vertical center if app < screen */
+  justify-content: flex-start;
+  /* FIX: Prevent top clipping */
   background-color: var(--bg-color);
   color: var(--text-main);
   touch-action: manipulation;
@@ -85,9 +84,8 @@ body::after {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  /* Distribute vertical space */
-  gap: 10px;
-  /* Reduced gap */
+  gap: 5px;
+  /* COMPACT GAP */
 
   /* Robust Logic: Safe Area + 10px base margin. Not 25px. */
   padding-top: max(10px, env(safe-area-inset-top));
@@ -324,11 +322,11 @@ body::after {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   grid-template-rows: repeat(4, 1fr);
-  /* 4 cols x 4 rows */
-  gap: 6px;
+  gap: 4px;
+  /* COMPACT GAP */
 
-  min-height: 200px;
-  /* Increased min-height */
+  min-height: 0;
+  /* CRITICAL: Allow shrinking to fit screen */
   width: 100%;
 }
 
