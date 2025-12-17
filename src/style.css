@@ -34,7 +34,9 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -88,10 +90,10 @@ body::after {
   gap: 15px;
   /* Spacing between sections */
 
-  padding-top: env(safe-area-inset-top, 15px);
-  padding-bottom: env(safe-area-inset-bottom, 15px);
-  padding-left: max(15px, env(safe-area-inset-left));
-  padding-right: max(15px, env(safe-area-inset-right));
+  padding-top: max(25px, env(safe-area-inset-top));
+  padding-bottom: max(25px, env(safe-area-inset-bottom));
+  padding-left: max(25px, env(safe-area-inset-left));
+  padding-right: max(25px, env(safe-area-inset-right));
   margin: 0 auto;
 
   position: relative;
