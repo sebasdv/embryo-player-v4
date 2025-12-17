@@ -41,16 +41,21 @@
 
   .app-shell {
     gap: 2px;
+    /* Force top down to clear browser bar */
+    padding-top: max(30px, env(safe-area-inset-top));
+    padding-bottom: max(5px, env(safe-area-inset-bottom));
   }
 
   .screen-container {
     padding: 4px;
     border-radius: 4px;
     /* Save corner space? */
+    gap: 2px;
   }
 
   .btn-retro {
-    height: 30px;
+    height: 25px;
+    /* Even smaller */
     font-size: 8px;
   }
 
@@ -128,7 +133,7 @@ body::after {
      minmax(0, 1fr): Flexible space, allowed to shrink to 0 if needed (Screen)
      minmax(0, 1.3fr): Flexible space, allowed to shrink (Pads). 1.3x screen size.
   */
-  grid-template-rows: max-content minmax(0, 1fr) max-content minmax(0, 1.3fr);
+  grid-template-rows: max-content minmax(100px, 1fr) max-content minmax(0, 1.3fr);
   gap: 4px;
 
   /* Safe Area logic - Keeping it tight */
