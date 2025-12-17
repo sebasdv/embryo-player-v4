@@ -308,7 +308,11 @@ function generatePads() {
 }
 
 // Generate immediately for layout
+// Generate immediately for layout
 generatePads();
+
+// SCALE UI IMMEDIATELY
+new ConstraintManager("game-shell");
 
 // --- Main Init ---
 initButton.addEventListener('click', async () => {
@@ -319,10 +323,7 @@ initButton.addEventListener('click', async () => {
   try {
     // 1. Init Persistence
     console.log('[Init] 1. Persistence...');
-    await persistence.init(); // NEW
-
-    // SCALE UI
-    new ConstraintManager("game-shell");
+    await persistence.init();
 
     console.log('[Init] 2. Audio...');
     await audioManager.init();
