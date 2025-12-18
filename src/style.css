@@ -39,3 +39,85 @@ body {
   position: relative;
   overflow: hidden;
 }
+
+/* --- Phase 2: Layout Structure --- */
+
+.ui-header {
+  height: 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 10px;
+  border-bottom: 2px solid black;
+  flex-shrink: 0;
+  /* Fixed height */
+}
+
+.ui-visualizer {
+  flex-grow: 1;
+  /* Takes all available space */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f0f0;
+  /* Temporary placeholder bg */
+  position: relative;
+}
+
+.ui-controls {
+  /* Fixed proportion or flexible? For pads + knobs, we usually want good height */
+  height: 50%;
+  max-height: 480px;
+  /* Don't eat the visualizer on massive screens */
+  min-height: 320px;
+  /* Ensure space for pads */
+  border-top: 2px solid black;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  flex-shrink: 0;
+}
+
+/* Header Components */
+.status-indicator {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.bpm-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.bpm-btn {
+  background: white;
+  border: 1px solid black;
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  font-family: inherit;
+  font-weight: bold;
+}
+
+.bpm-btn:active {
+  background: black;
+  color: white;
+}
+
+/* Start Overlay */
+#start-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: white;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
