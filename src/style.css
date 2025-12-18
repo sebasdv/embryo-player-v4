@@ -87,6 +87,32 @@ body {
   /* inherits 18px */
 }
 
+.action-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  background: white;
+  border: 1px solid black;
+  padding: 0 10px;
+  height: 44px;
+  /* Touch friendly */
+  font-family: inherit;
+  font-weight: bold;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn:active {
+  background: black;
+  color: white;
+}
+
 .bpm-controls {
   display: flex;
   gap: 15px;
@@ -112,8 +138,6 @@ body {
   background: black;
   color: white;
 }
-
-/* ... existing code ... */
 
 /* Start Overlay */
 #start-overlay {
@@ -142,6 +166,7 @@ body {
   /* Spacing between pads */
   width: 100%;
   height: 100%;
+  transition: background-color 0.2s;
 }
 
 .drum-pad {
@@ -158,7 +183,7 @@ body {
   /* Prevents double-tap zoom */
   border-radius: 4px;
   /* Slight rounding for modern feel */
-  transition: background-color 0.05s, color 0.05s;
+  transition: background-color 0.05s, color 0.05s, border-width 0.1s;
   position: relative;
 }
 
@@ -167,6 +192,36 @@ body {
   color: white;
   border-color: black;
   transform: scale(0.98);
+}
+
+/* Phase 4: Persistence / Loaded State */
+.drum-pad.loaded {
+  border-width: 3px;
+  /* Valid indicator of content */
+}
+
+/* Small indicator dot for loaded pads */
+.drum-pad.loaded::after {
+  content: '';
+  display: block;
+  width: 6px;
+  height: 6px;
+  background: black;
+  border-radius: 50%;
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
+
+/* Drag Over Feedback */
+.drum-pad.drag-over {
+  background-color: #eee;
+  border-style: dashed;
+}
+
+.pad-grid.drag-over {
+  background-color: #f9f9f9;
+  border: 2px dashed #999;
 }
 
 .drum-pad .key-hint {
