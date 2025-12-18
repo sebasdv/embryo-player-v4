@@ -38,6 +38,26 @@ app.innerHTML = `
              <!-- Canvas -->
         </div>
 
+        <!-- FX Panel -->
+        <div class="fx-panel">
+            <div class="fx-group">
+                <label class="fx-label">FLT</label>
+                <input type="range" id="fx-cutoff" class="fx-slider" min="0" max="100" value="100">
+            </div>
+            <div class="fx-group">
+                <label class="fx-label">RES</label>
+                <input type="range" id="fx-res" class="fx-slider" min="0" max="100" value="0">
+            </div>
+            <div class="fx-group">
+                <label class="fx-label">DRV</label>
+                <input type="range" id="fx-dist" class="fx-slider" min="0" max="100" value="0">
+            </div>
+             <div class="fx-group">
+                <label class="fx-label">VOL</label>
+                <input type="range" id="fx-vol" class="fx-slider" min="0" max="100" value="80">
+            </div>
+        </div>
+
         <!-- Controls Area (Pads) -->
         <div class="ui-controls">
             <div id="pad-container" class="pad-grid"></div>
@@ -87,7 +107,6 @@ PAD_CONFIG.forEach(p => {
 // --- Initialization ---
 const startOverlay = document.querySelector('#start-overlay') as HTMLDivElement;
 const mainInterface = document.querySelector('#main-interface') as HTMLDivElement;
-// Removed statusIndicator definition
 const bpmDisplay = document.querySelector('#bpm-display') as HTMLSpanElement;
 
 startOverlay.addEventListener('click', async () => {
@@ -149,12 +168,77 @@ startOverlay.addEventListener('click', async () => {
     setupBpmControls();
     setupActionControls();
     setupDragAndDrop();
+    await setupFXControls();
 
   } catch (err) {
     console.error('[System] Init Error:', err);
     startOverlay.innerHTML = '<h1>ERROR</h1><p>See Console</p>';
   }
 });
+
+// --- FX Controls Logic ---
+async function setupFXControls() {
+  const cutoffInput = document.getElementById('fx-cutoff') as HTMLInputElement;
+  const resInput = document.getElementById('fx-res') as HTMLInputElement;
+  const distInput = document.getElementById('fx-dist') as HTMLInputElement;
+  const volInput = document.getElementById('fx-vol') as HTMLInputElement;
+
+  if (!cutoffInput || !resInput || !distInput || !volInput) return;
+
+  // Load Saved
+  try {
+    const saved = await persistence.loadSetting('fx-state');
+    if (saved) {
+      cutoffInput.value = saved.cutoff;
+      resInput.value = saved.res;
+      distInput.value = saved.dist;
+      volInput.value = saved.vol;
+
+      // Apply immediately
+      audioManager.setFilterCutoff(Number(saved.cutoff));
+      audioManager.setFilterResonance(Number(saved.res));
+      audioManager.setDistortion(Number(saved.dist));
+      audioManager.setMasterVolume(Number(saved.vol) / 100);
+    } else {
+      // Defaults
+      audioManager.setFilterCutoff(100);
+      audioManager.setFilterResonance(0);
+      audioManager.setDistortion(0);
+      audioManager.setMasterVolume(0.8);
+    }
+  } catch (e) { console.warn('FX Load Failed', e); }
+
+  // Handlers
+  const saveFX = () => {
+    persistence.saveSetting('fx-state', {
+      cutoff: cutoffInput.value,
+      res: resInput.value,
+      dist: distInput.value,
+      vol: volInput.value
+    });
+  };
+
+  cutoffInput.addEventListener('input', () => {
+    audioManager.setFilterCutoff(Number(cutoffInput.value));
+    saveFX();
+  });
+
+  resInput.addEventListener('input', () => {
+    audioManager.setFilterResonance(Number(resInput.value));
+    saveFX();
+  });
+
+  distInput.addEventListener('input', () => {
+    audioManager.setDistortion(Number(distInput.value));
+    saveFX();
+  });
+
+  volInput.addEventListener('input', () => {
+    audioManager.setMasterVolume(Number(volInput.value) / 100);
+    saveFX();
+  });
+}
+
 
 // --- Pad Generation ---
 function generatePads() {

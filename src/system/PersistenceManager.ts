@@ -79,6 +79,32 @@ export class PersistenceManager {
         });
     }
 
+    // --- Settings Methods (Added for Phase 6) ---
+
+    async saveSetting(key: string, value: any): Promise<void> {
+        if (!this.db) return;
+        return new Promise((resolve, reject) => {
+            const transaction = this.db!.transaction(['settings'], 'readwrite');
+            const store = transaction.objectStore('settings');
+            const request = store.put(value, key);
+
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async loadSetting(key: string): Promise<any> {
+        if (!this.db) return null;
+        return new Promise((resolve, reject) => {
+            const transaction = this.db!.transaction(['settings'], 'readonly');
+            const store = transaction.objectStore('settings');
+            const request = store.get(key);
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
     async clear(): Promise<void> {
         if (!this.db) return;
         const tx = this.db.transaction('samples', 'readwrite');
