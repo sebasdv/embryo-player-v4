@@ -208,35 +208,34 @@ async function setupFXControls() {
     }
   } catch (e) { console.warn('FX Load Failed', e); }
 
-  // Handlers
-  const saveFX = () => {
-    persistence.saveSetting('fx-state', {
-      cutoff: cutoffInput.value,
-      res: resInput.value,
-      dist: distInput.value,
-      vol: volInput.value
-    });
+  // Unified Update Handler
+  const updateState = () => {
+    const cutoff = Number(cutoffInput.value);
+    const res = Number(resInput.value);
+    const dist = Number(distInput.value);
+    const vol = Number(volInput.value);
+
+    // Audio
+    audioManager.setFilterCutoff(cutoff);
+    audioManager.setFilterResonance(res);
+    audioManager.setDistortion(dist);
+    audioManager.setMasterVolume(vol / 100);
+
+    // Visuals (Link FX to Visualizer)
+    // setEffects(distortion, filter)
+    visualizer.setEffects(dist, cutoff);
+
+    // Persistence
+    persistence.saveSetting('fx-state', { cutoff, res, dist, vol });
   };
 
-  cutoffInput.addEventListener('input', () => {
-    audioManager.setFilterCutoff(Number(cutoffInput.value));
-    saveFX();
-  });
+  cutoffInput.addEventListener('input', updateState);
+  resInput.addEventListener('input', updateState);
+  distInput.addEventListener('input', updateState);
+  volInput.addEventListener('input', updateState);
 
-  resInput.addEventListener('input', () => {
-    audioManager.setFilterResonance(Number(resInput.value));
-    saveFX();
-  });
-
-  distInput.addEventListener('input', () => {
-    audioManager.setDistortion(Number(distInput.value));
-    saveFX();
-  });
-
-  volInput.addEventListener('input', () => {
-    audioManager.setMasterVolume(Number(volInput.value) / 100);
-    saveFX();
-  });
+  // Initial Sync for Visualizer
+  visualizer.setEffects(Number(distInput.value), Number(cutoffInput.value));
 }
 
 
