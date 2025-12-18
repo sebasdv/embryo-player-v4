@@ -27,6 +27,7 @@ app.innerHTML = `
             </div>
             
             <div class="bpm-controls">
+                 <button id="btn-tap" class="bpm-btn" style="width: auto; padding: 0 8px; margin-right: 5px; font-size: 0.8rem;">TAP</button>
                 <button id="bpm-minus" class="bpm-btn">-</button>
                 <span id="bpm-display">120</span>
                 <button id="bpm-plus" class="bpm-btn">+</button>
@@ -311,10 +312,12 @@ window.addEventListener('keydown', (e) => {
 function setupBpmControls() {
   const btnMinus = document.querySelector('#bpm-minus') as HTMLButtonElement;
   const btnPlus = document.querySelector('#bpm-plus') as HTMLButtonElement;
+  const btnTap = document.querySelector('#btn-tap') as HTMLButtonElement;
+
   if (!btnMinus || !btnPlus) return;
 
-  const updateBpm = (delta: number) => {
-    let newBpm = currentBpm + delta;
+  const updateBpm = (delta: number, absolute?: number) => {
+    let newBpm = absolute !== undefined ? absolute : currentBpm + delta;
     if (newBpm < 40) newBpm = 40;
     if (newBpm > 240) newBpm = 240;
     currentBpm = newBpm;
@@ -325,6 +328,41 @@ function setupBpmControls() {
 
   btnMinus.addEventListener('click', () => updateBpm(-1));
   btnPlus.addEventListener('click', () => updateBpm(1));
+
+  // --- TAP TEMPO LOGIC ---
+  let tapTimes: number[] = [];
+
+  btnTap?.addEventListener('click', () => {
+    const now = Date.now();
+
+    // Reset if too long between taps (2s)
+    if (tapTimes.length > 0 && now - tapTimes[tapTimes.length - 1] > 2000) {
+      tapTimes = [];
+    }
+
+    tapTimes.push(now);
+    if (tapTimes.length > 4) tapTimes.shift(); // Keep last 4
+
+    if (tapTimes.length > 1) {
+      // Calculate average interval
+      let intervalsSum = 0;
+      for (let i = 1; i < tapTimes.length; i++) {
+        intervalsSum += tapTimes[i] - tapTimes[i - 1];
+      }
+      const avgInterval = intervalsSum / (tapTimes.length - 1);
+      const bpm = Math.round(60000 / avgInterval);
+
+      updateBpm(0, bpm);
+
+      // Visual Feedback
+      btnTap.textContent = "OK";
+      setTimeout(() => btnTap.textContent = "TAP", 200);
+    } else {
+      // First tap
+      btnTap.textContent = "*";
+      setTimeout(() => btnTap.textContent = "TAP", 200);
+    }
+  });
 }
 
 function setupActionControls() {
