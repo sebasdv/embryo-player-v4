@@ -12,6 +12,8 @@ body {
   align-items: center;
   min-height: 100vh;
   font-family: monospace;
+  font-size: 18px;
+  /* Improved mobile readability */
 }
 
 #app {
@@ -43,14 +45,14 @@ body {
 /* --- Phase 2: Layout Structure --- */
 
 .ui-header {
-  height: 60px;
+  height: 70px;
+  /* Increased for touch targets */
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 10px;
   border-bottom: 2px solid black;
   flex-shrink: 0;
-  /* Fixed height */
 }
 
 .ui-visualizer {
@@ -81,12 +83,13 @@ body {
 /* Header Components */
 .status-indicator {
   font-weight: bold;
-  font-size: 14px;
+  font-size: 1rem;
+  /* inherits 18px */
 }
 
 .bpm-controls {
   display: flex;
-  gap: 10px;
+  gap: 15px;
   align-items: center;
 }
 
@@ -94,10 +97,15 @@ body {
   background: white;
   border: 1px solid black;
   cursor: pointer;
-  width: 30px;
-  height: 30px;
+  width: 44px;
+  /* Minimum touch target size */
+  height: 44px;
   font-family: inherit;
   font-weight: bold;
+  font-size: 1.2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .bpm-btn:active {
