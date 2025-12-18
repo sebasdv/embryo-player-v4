@@ -4,6 +4,12 @@ import { ThreeVisualizer } from './graphics/ThreeVisualizer'
 import { MidiManager } from './audio/MidiManager'
 import { PersistenceManager } from './system/PersistenceManager'
 
+// --- Constants & Defaults ---
+const DEFAULT_KEY_MAP: Record<string, string> = {
+  'z': 'pad1', 'x': 'pad2', 'c': 'pad3', 'v': 'pad4'
+  // Can be extended here
+};
+
 // --- HTML Structure ---
 const app = document.querySelector<HTMLDivElement>('#app')!;
 app.innerHTML = `
@@ -27,9 +33,9 @@ app.innerHTML = `
             </div>
             
             <div class="bpm-controls">
-                 <button id="btn-tap" class="bpm-btn" style="width: auto; padding: 0 8px; margin-right: 5px; font-size: 0.8rem;">TAP</button>
+                <button id="btn-tap" class="bpm-btn" style="width: auto; padding: 0 10px; margin-right: 5px; font-size: 0.8rem; font-weight: 800;">TAP</button>
                 <button id="bpm-minus" class="bpm-btn">-</button>
-                <span id="bpm-display">120</span>
+                <span id="bpm-display" style="min-width: 3.5rem; text-align: center;">120</span>
                 <button id="bpm-plus" class="bpm-btn">+</button>
             </div>
         </div>
@@ -76,33 +82,25 @@ const persistence = new PersistenceManager();
 // --- State ---
 let currentBpm = 120;
 let isInitialized = false;
+let keyMap: Record<string, string> = { ...DEFAULT_KEY_MAP };
+let invertedKeyMap: Record<string, string> = {}; // padId -> key
 
 // --- Pad Configuration ---
-const PAD_CONFIG: { id: string, key: string, midi: number }[] = [];
+const PAD_CONFIG: { id: string, midi: number }[] = [];
 const BASE_MIDI = 48;
 
-// Generate Config
+// Generate Sequential Pad Data
 for (let r = 3; r >= 0; r--) {
   for (let c = 1; c <= 4; c++) {
     const padNum = (r * 4) + c;
     const midiNote = BASE_MIDI + (padNum - 1);
-
-    let key = '';
-    if (padNum === 1) key = 'z';
-    if (padNum === 2) key = 'x';
-    if (padNum === 3) key = 'c';
-    if (padNum === 4) key = 'v';
-
-    PAD_CONFIG.push({ id: `pad${padNum}`, key, midi: midiNote });
+    PAD_CONFIG.push({ id: `pad${padNum}`, midi: midiNote });
   }
 }
 
-// Maps
 const MIDI_TO_PAD: Record<number, string> = {};
-const KEY_TO_PAD: Record<string, string> = {};
 PAD_CONFIG.forEach(p => {
   MIDI_TO_PAD[p.midi] = p.id;
-  if (p.key) KEY_TO_PAD[p.key] = p.id;
 });
 
 // --- Initialization ---
@@ -120,12 +118,20 @@ startOverlay.addEventListener('click', async () => {
     // 1. Persistence
     await persistence.init();
 
-    // 2. Audio
+    // 2. Load Settings (Mappings, BPM, etc)
+    const savedKeys = await persistence.loadSetting('key-map');
+    if (savedKeys) keyMap = savedKeys;
+    // Rebuild reverse map for UI hints
+    invertedKeyMap = {};
+    for (const [key, padId] of Object.entries(keyMap)) {
+      invertedKeyMap[padId] = key;
+    }
+
+    // 3. Audio
     await audioManager.init();
     audioManager.setBpm(currentBpm);
 
-    // 3. Visualizer Integration
-    console.log('[System] Starting Visualizer...');
+    // 4. Visualizer Integration
     const visContainer = document.querySelector('#visualizer-container') as HTMLDivElement;
     if (visContainer) {
       visContainer.innerHTML = '';
@@ -147,16 +153,18 @@ startOverlay.addEventListener('click', async () => {
       resizeObserver.observe(visContainer);
     }
 
-    // 4. UI Generation
+    // 5. UI Generation
     generatePads();
 
-    // 5. Load Saved Samples
+    // 6. Load Saved Samples
     await loadAllSavedSamples();
 
-    // 6. MIDI
+    // 7. MIDI
     try {
-      await midiManager.init();
-      midiManager.setNoteOnCallback(handleMidiNote);
+      if (await midiManager.init()) {
+        midiManager.setNoteOnCallback(handleMidiNote);
+        midiManager.setCcCallback(handleMidiCC);
+      }
     } catch (err) {
       console.warn('[System] MIDI Init failed', err);
     }
@@ -209,24 +217,18 @@ async function setupFXControls() {
     }
   } catch (e) { console.warn('FX Load Failed', e); }
 
-  // Unified Update Handler
   const updateState = () => {
     const cutoff = Number(cutoffInput.value);
     const res = Number(resInput.value);
     const dist = Number(distInput.value);
     const vol = Number(volInput.value);
 
-    // Audio
     audioManager.setFilterCutoff(cutoff);
     audioManager.setFilterResonance(res);
     audioManager.setDistortion(dist);
     audioManager.setMasterVolume(vol / 100);
-
-    // Visuals (Link FX to Visualizer)
-    // setEffects(distortion, filter)
     visualizer.setEffects(dist, cutoff);
 
-    // Persistence
     persistence.saveSetting('fx-state', { cutoff, res, dist, vol });
   };
 
@@ -235,7 +237,6 @@ async function setupFXControls() {
   distInput.addEventListener('input', updateState);
   volInput.addEventListener('input', updateState);
 
-  // Initial Sync for Visualizer
   visualizer.setEffects(Number(distInput.value), Number(cutoffInput.value));
 }
 
@@ -256,10 +257,12 @@ function generatePads() {
     label.textContent = pad.id.replace('pad', '');
     btn.appendChild(label);
 
-    if (pad.key) {
+    // Dynamic Key Hint
+    const keyHint = invertedKeyMap[pad.id];
+    if (keyHint) {
       const hint = document.createElement('span');
       hint.className = 'key-hint';
-      hint.textContent = pad.key.toUpperCase();
+      hint.textContent = keyHint.toUpperCase();
       btn.appendChild(hint);
     }
 
@@ -278,21 +281,15 @@ function generatePads() {
 // --- Trigger Logic ---
 function triggerVoice(padId: string, velocity: number = 1.0) {
   if (!isInitialized) return;
-
-  // Audio
   audioManager.playSample(padId, velocity);
-
-  // Visual
   const btn = document.getElementById(`btn-${padId}`);
   if (btn) {
     btn.classList.add('active');
     setTimeout(() => btn.classList.remove('active'), 80);
   }
-
-  console.log(`[Trigger] ${padId} v${velocity.toFixed(2)}`);
 }
 
-// --- Inputs (MIDI/Key) ---
+// --- MIDI Handling ---
 function handleMidiNote(note: number, velocity: number) {
   const padId = MIDI_TO_PAD[note];
   if (padId) {
@@ -300,11 +297,32 @@ function handleMidiNote(note: number, velocity: number) {
   }
 }
 
+function handleMidiCC(cc: number, value: number) {
+  // CC 24: Cutoff, 25: Res, 26: Dist, 27: Vol
+  const normalized = (value / 127) * 100;
+
+  if (cc === 24) {
+    const input = document.getElementById('fx-cutoff') as HTMLInputElement;
+    if (input) { input.value = normalized.toString(); input.dispatchEvent(new Event('input')); }
+  } else if (cc === 25) {
+    const input = document.getElementById('fx-res') as HTMLInputElement;
+    if (input) { input.value = normalized.toString(); input.dispatchEvent(new Event('input')); }
+  } else if (cc === 26) {
+    const input = document.getElementById('fx-dist') as HTMLInputElement;
+    if (input) { input.value = normalized.toString(); input.dispatchEvent(new Event('input')); }
+  } else if (cc === 27) {
+    const input = document.getElementById('fx-vol') as HTMLInputElement;
+    if (input) { input.value = normalized.toString(); input.dispatchEvent(new Event('input')); }
+  }
+}
+
+// --- Keyboard Handling ---
 window.addEventListener('keydown', (e) => {
   if (e.repeat) return;
   const key = e.key.toLowerCase();
-  if (KEY_TO_PAD[key]) {
-    triggerVoice(KEY_TO_PAD[key]);
+  const padId = keyMap[key];
+  if (padId) {
+    triggerVoice(padId);
   }
 });
 
@@ -323,8 +341,14 @@ function setupBpmControls() {
     currentBpm = newBpm;
 
     audioManager.setBpm(currentBpm);
-    if (bpmDisplay) bpmDisplay.textContent = currentBpm.toString();
+    if (bpmDisplay) {
+      // Pad with leading zeros (0xx)
+      bpmDisplay.textContent = currentBpm.toString().padStart(3, '0');
+    }
   };
+
+  // Initial display padding
+  if (bpmDisplay) bpmDisplay.textContent = currentBpm.toString().padStart(3, '0');
 
   btnMinus.addEventListener('click', () => updateBpm(-1));
   btnPlus.addEventListener('click', () => updateBpm(1));
@@ -334,34 +358,23 @@ function setupBpmControls() {
 
   btnTap?.addEventListener('click', () => {
     const now = Date.now();
-
-    // Reset if too long between taps (2s)
     if (tapTimes.length > 0 && now - tapTimes[tapTimes.length - 1] > 2000) {
       tapTimes = [];
     }
 
     tapTimes.push(now);
-    if (tapTimes.length > 4) tapTimes.shift(); // Keep last 4
+    if (tapTimes.length > 4) tapTimes.shift();
 
     if (tapTimes.length > 1) {
-      // Calculate average interval
       let intervalsSum = 0;
       for (let i = 1; i < tapTimes.length; i++) {
         intervalsSum += tapTimes[i] - tapTimes[i - 1];
       }
       const avgInterval = intervalsSum / (tapTimes.length - 1);
       const bpm = Math.round(60000 / avgInterval);
-
       updateBpm(0, bpm);
-
-      // Visual Feedback
-      btnTap.textContent = "OK";
-      setTimeout(() => btnTap.textContent = "TAP", 200);
-    } else {
-      // First tap
-      btnTap.textContent = "*";
-      setTimeout(() => btnTap.textContent = "TAP", 200);
     }
+    // No text change, color is handled by CSS :active
   });
 }
 
@@ -379,43 +392,34 @@ function setupActionControls() {
     if (files && files.length > 0) {
       await loadKitFiles(Array.from(files));
     }
-    fileInput.value = ''; // Reset
+    fileInput.value = '';
   });
 
   btnClear?.addEventListener('click', async () => {
     if (confirm('Clear all samples?')) {
       await persistence.clear();
       document.querySelectorAll('.drum-pad').forEach(el => el.classList.remove('loaded'));
-      console.log('[System] Kit Cleared');
     }
   });
 }
 
 // --- Sample Loading Logic ---
-
 async function loadKitFiles(files: File[]) {
   files.sort((a, b) => a.name.localeCompare(b.name));
   const filesToLoad = files.slice(0, 16);
 
-  console.log('Loading...');
-
   for (let i = 0; i < filesToLoad.length; i++) {
     const padId = `pad${i + 1}`;
-    const file = filesToLoad[i];
-    await loadSampleToPad(padId, file);
+    await loadSampleToPad(padId, files[i]);
   }
-  console.log('Loaded.');
 }
 
 async function loadSampleToPad(padId: string, file: File) {
   try {
     await audioManager.loadUserSample(padId, file);
     await persistence.saveSample(padId, file);
-
     const btn = document.getElementById(`btn-${padId}`);
     if (btn) btn.classList.add('loaded');
-
-    console.log(`[Load] ${file.name} -> ${padId}`);
   } catch (err) {
     console.error(`[Load] Failed for ${padId}`, err);
   }
@@ -425,11 +429,9 @@ async function loadAllSavedSamples() {
   try {
     const samples = await persistence.getAllSamples();
     if (Object.keys(samples).length > 0) {
-      console.log('[Persistence] Found saved samples:', Object.keys(samples).length);
       for (const [padId, blob] of Object.entries(samples)) {
         const file = new File([blob], "saved-sample.wav", { type: blob.type });
         await audioManager.loadUserSample(padId, file);
-
         const btn = document.getElementById(`btn-${padId}`);
         if (btn) btn.classList.add('loaded');
       }
@@ -467,22 +469,15 @@ function setupDragAndDrop() {
       e.stopPropagation();
       padEl.classList.add('drag-over');
     });
-
-    padEl.addEventListener('dragleave', () => {
-      padEl.classList.remove('drag-over');
-    });
-
+    padEl.addEventListener('dragleave', () => padEl.classList.remove('drag-over'));
     padEl.addEventListener('drop', async (e: any) => {
       e.preventDefault();
       e.stopPropagation();
       padEl.classList.remove('drag-over');
-
       const files = e.dataTransfer.files;
       if (files && files.length > 0) {
         const padId = padEl.dataset.padId;
-        if (padId) {
-          await loadSampleToPad(padId, files[0]);
-        }
+        if (padId) await loadSampleToPad(padId, files[0]);
       }
     });
   });
