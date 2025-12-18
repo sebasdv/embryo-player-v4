@@ -12,7 +12,6 @@ body {
   align-items: center;
   min-height: 100vh;
   font-family: monospace;
-  /* Minimalist font default */
 }
 
 #app {
@@ -28,12 +27,11 @@ body {
   margin: 5px;
   /* Flexible sizing with minimums */
   width: calc(100% - 10px);
-  height: calc(100vh - 10px);
+  height: calc(100dvh - 10px);
   min-width: 360px;
   min-height: 640px;
-  max-width: 480px;
-  /* Optional: Keep it phone-like constraints if desired, or remove for full flex */
-  max-height: 900px;
+
+  /* Removed max-width/max-height for full screen scaling */
 
   background-color: white;
   display: flex;
