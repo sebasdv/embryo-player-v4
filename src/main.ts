@@ -35,7 +35,7 @@ app.innerHTML = `
 
         <!-- Visualizer Area -->
         <div class="ui-visualizer" id="visualizer-container">
-             <div id="status-indicator" class="status-indicator">READY</div>
+             <!-- Canvas -->
         </div>
 
         <!-- Controls Area (Pads) -->
@@ -49,7 +49,6 @@ app.innerHTML = `
 // --- Systems ---
 const audioManager = new AudioManager();
 const visualizer = new ThreeVisualizer();
-console.log('[System] Visualizer loaded', visualizer);
 const midiManager = new MidiManager();
 const persistence = new PersistenceManager();
 
@@ -88,7 +87,7 @@ PAD_CONFIG.forEach(p => {
 // --- Initialization ---
 const startOverlay = document.querySelector('#start-overlay') as HTMLDivElement;
 const mainInterface = document.querySelector('#main-interface') as HTMLDivElement;
-const statusIndicator = document.querySelector('#status-indicator') as HTMLDivElement;
+// Removed statusIndicator definition
 const bpmDisplay = document.querySelector('#bpm-display') as HTMLSpanElement;
 
 startOverlay.addEventListener('click', async () => {
@@ -105,20 +104,41 @@ startOverlay.addEventListener('click', async () => {
     await audioManager.init();
     audioManager.setBpm(currentBpm);
 
-    // 3. UI Generation
+    // 3. Visualizer Integration
+    console.log('[System] Starting Visualizer...');
+    const visContainer = document.querySelector('#visualizer-container') as HTMLDivElement;
+    if (visContainer) {
+      visContainer.innerHTML = '';
+      const canvas = document.createElement('canvas');
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+      visContainer.appendChild(canvas);
+
+      visualizer.init(canvas);
+      visualizer.setDataProvider(() => audioManager.getAllWaveforms());
+      visualizer.start();
+
+      const resizeObserver = new ResizeObserver(entries => {
+        for (let entry of entries) {
+          const { width, height } = entry.contentRect;
+          visualizer.resize(width, height);
+        }
+      });
+      resizeObserver.observe(visContainer);
+    }
+
+    // 4. UI Generation
     generatePads();
 
-    // 4. Load Saved Samples
+    // 5. Load Saved Samples
     await loadAllSavedSamples();
 
-    // 5. MIDI
+    // 6. MIDI
     try {
       await midiManager.init();
       midiManager.setNoteOnCallback(handleMidiNote);
-      statusIndicator.textContent = "AUDIO + MIDI";
     } catch (err) {
       console.warn('[System] MIDI Init failed', err);
-      statusIndicator.textContent = "AUDIO ONLY";
     }
 
     isInitialized = true;
@@ -148,7 +168,6 @@ function generatePads() {
     btn.id = `btn-${pad.id}`;
     btn.dataset.padId = pad.id;
 
-    // Pad ID Label
     const label = document.createElement('span');
     label.textContent = pad.id.replace('pad', '');
     btn.appendChild(label);
@@ -160,7 +179,6 @@ function generatePads() {
       btn.appendChild(hint);
     }
 
-    // Click Event (Pointer)
     btn.addEventListener('touchstart', (e) => {
       e.preventDefault();
       triggerVoice(pad.id);
@@ -220,11 +238,6 @@ function setupBpmControls() {
 
     audioManager.setBpm(currentBpm);
     if (bpmDisplay) bpmDisplay.textContent = currentBpm.toString();
-
-    if (statusIndicator) {
-      statusIndicator.textContent = `BPM ${currentBpm}`;
-      setTimeout(() => statusIndicator.textContent = isInitialized ? "Active" : "Ready", 1000);
-    }
   };
 
   btnMinus.addEventListener('click', () => updateBpm(-1));
@@ -251,8 +264,6 @@ function setupActionControls() {
   btnClear?.addEventListener('click', async () => {
     if (confirm('Clear all samples?')) {
       await persistence.clear();
-      // Clear Audio (not exposed yet)
-      // Clear UI
       document.querySelectorAll('.drum-pad').forEach(el => el.classList.remove('loaded'));
       console.log('[System] Kit Cleared');
     }
@@ -262,35 +273,24 @@ function setupActionControls() {
 // --- Sample Loading Logic ---
 
 async function loadKitFiles(files: File[]) {
-  // Sort alpha
   files.sort((a, b) => a.name.localeCompare(b.name));
-
-  // Take max 16
   const filesToLoad = files.slice(0, 16);
 
-  statusIndicator.textContent = "LOADING...";
+  console.log('Loading...');
 
   for (let i = 0; i < filesToLoad.length; i++) {
-    // Pad 1-16 (indices 0-15)
     const padId = `pad${i + 1}`;
     const file = filesToLoad[i];
-
     await loadSampleToPad(padId, file);
   }
-
-  statusIndicator.textContent = "LOADED";
-  setTimeout(() => statusIndicator.textContent = "Active", 1500);
+  console.log('Loaded.');
 }
 
 async function loadSampleToPad(padId: string, file: File) {
   try {
-    // 1. Audio Manager
     await audioManager.loadUserSample(padId, file);
-
-    // 2. Persistence
     await persistence.saveSample(padId, file);
 
-    // 3. UI Update
     const btn = document.getElementById(`btn-${padId}`);
     if (btn) btn.classList.add('loaded');
 
@@ -306,11 +306,9 @@ async function loadAllSavedSamples() {
     if (Object.keys(samples).length > 0) {
       console.log('[Persistence] Found saved samples:', Object.keys(samples).length);
       for (const [padId, blob] of Object.entries(samples)) {
-        // Blob to File (mock)
         const file = new File([blob], "saved-sample.wav", { type: blob.type });
         await audioManager.loadUserSample(padId, file);
 
-        // UI
         const btn = document.getElementById(`btn-${padId}`);
         if (btn) btn.classList.add('loaded');
       }
@@ -325,11 +323,9 @@ function setupDragAndDrop() {
   const padContainer = document.getElementById('pad-container');
   const pads = document.querySelectorAll('.drum-pad');
 
-  // Prevent default globally
   window.addEventListener('dragover', e => e.preventDefault());
   window.addEventListener('drop', e => e.preventDefault());
 
-  // 1. Kit Drop (on container)
   padContainer?.addEventListener('dragover', (e) => {
     e.preventDefault();
     padContainer.classList.add('drag-over');
@@ -343,14 +339,11 @@ function setupDragAndDrop() {
     }
   });
 
-  // 2. Individual Pad Drop
   pads.forEach(pad => {
-    // Cast to HTMLElement to access dataset
     const padEl = pad as HTMLElement;
-
     padEl.addEventListener('dragover', (e) => {
       e.preventDefault();
-      e.stopPropagation(); // Stop bubbling to container
+      e.stopPropagation();
       padEl.classList.add('drag-over');
     });
 
@@ -365,8 +358,7 @@ function setupDragAndDrop() {
 
       const files = e.dataTransfer.files;
       if (files && files.length > 0) {
-        // Load single file to this specific pad
-        const padId = padEl.dataset.padId; // We added data-padId in generate
+        const padId = padEl.dataset.padId;
         if (padId) {
           await loadSampleToPad(padId, files[0]);
         }
