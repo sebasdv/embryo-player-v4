@@ -16,6 +16,9 @@ app.innerHTML = `
   <div class="main-frame">
     <!-- Start Overlay (Visible Initially) -->
     <div id="start-overlay">
+        <div class="glitch-wrapper">
+          <img src="logo_demo.svg" id="start-logo" alt="Embryo Logo" />
+        </div>
         <h1 style="font-family: inherit;">CLICK TO START</h1>
     </div>
 
@@ -110,7 +113,8 @@ const bpmDisplay = document.querySelector('#bpm-display') as HTMLSpanElement;
 
 startOverlay.addEventListener('click', async () => {
   if (isInitialized) return;
-  startOverlay.innerHTML = '<h1>INITIALIZING...</h1>';
+  const startText = startOverlay.querySelector('h1');
+  if (startText) startText.textContent = 'INITIALIZING...';
 
   try {
     console.log('[System] Starting initialization...');
