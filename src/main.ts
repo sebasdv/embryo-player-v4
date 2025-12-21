@@ -261,15 +261,6 @@ function generatePads() {
     label.textContent = pad.id.replace('pad', '');
     btn.appendChild(label);
 
-    // Dynamic Key Hint
-    const keyHint = invertedKeyMap[pad.id];
-    if (keyHint) {
-      const hint = document.createElement('span');
-      hint.className = 'key-hint';
-      hint.textContent = keyHint.toUpperCase();
-      btn.appendChild(hint);
-    }
-
     btn.addEventListener('touchstart', (e) => {
       e.preventDefault();
       triggerVoice(pad.id);
