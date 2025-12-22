@@ -40,8 +40,8 @@ export class ThreeVisualizer {
         this.renderer.setSize(300, 150);
         this.renderer.setPixelRatio(window.devicePixelRatio);
 
-        // Arcade Position: Low angle, close up
-        this.camera.position.set(0, -6, 5);
+        // Frontal Position: Centered
+        this.camera.position.set(0, 0, 7);
         this.camera.lookAt(0, 0, 0);
 
         this.initWaveforms();
