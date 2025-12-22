@@ -34,7 +34,7 @@ class MainProcessor extends AudioWorkletProcessor {
     private nextClickCountdown: number = 0;
     private samplesPerBeat: number = 0;
 
-    private nextVisSlot: number = 0;
+
 
     constructor() {
         super();
@@ -73,9 +73,13 @@ class MainProcessor extends AudioWorkletProcessor {
 
     triggerVoice(id: string, velocity: number = 1.0) {
         if (this.sampleBuffers.has(id)) {
-            // Assign a visualization slot (Round Robin)
-            const slot = this.nextVisSlot;
-            this.nextVisSlot = (this.nextVisSlot + 1) % 4;
+            // Direct Map: pad1 -> slot 0, pad16 -> slot 15
+            // Parsing "padX"
+            const padNum = parseInt(id.replace('pad', ''), 10);
+            let slot = 0;
+            if (!isNaN(padNum) && padNum >= 1 && padNum <= 16) {
+                slot = padNum - 1;
+            }
 
             this.activeVoices.push({
                 sampleId: id,
@@ -83,7 +87,7 @@ class MainProcessor extends AudioWorkletProcessor {
                 isPlaying: true,
                 gain: velocity,
                 visSlot: slot
-            } as any); // cast to any to avoid interface error if I can't update interface easily in replace_file_content
+            } as any);
         }
     }
 
@@ -96,7 +100,7 @@ class MainProcessor extends AudioWorkletProcessor {
 
         const bufferSize = mixOutput[0].length;
 
-        // 0. Clear All Outputs (Mix + 4 Vis Channels)
+        // 0. Clear All Outputs (Mix + 16 Vis Channels)
         for (let o = 0; o < outputs.length; o++) {
             const output = outputs[o];
             if (!output) continue;

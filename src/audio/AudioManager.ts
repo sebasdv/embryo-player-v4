@@ -33,12 +33,13 @@ export class AudioManager {
             console.log('[AudioManager] Loading worklet from:', mainProcessorUrl);
             await this.context.audioWorklet.addModule(mainProcessorUrl);
 
-            // Create Nodes - Request 5 outputs:
+            // Create Nodes - Request 17 outputs:
             // Output 0: Stereo Mix
-            // Output 1..4: Mono Visualization Channels
+            // Output 1..16: Mono Visualization Channels (16 Pads)
+            const channelCounts = [2, ...Array(16).fill(1)];
             this.workletNode = new AudioWorkletNode(this.context, 'main-processor', {
-                numberOfOutputs: 5,
-                outputChannelCount: [2, 1, 1, 1, 1] as any // Safari/some browsers might need specific channel counts
+                numberOfOutputs: 17,
+                outputChannelCount: channelCounts as any
             });
 
             this.filterNode = this.context.createBiquadFilter();
@@ -58,8 +59,8 @@ export class AudioManager {
             this.analyser.smoothingTimeConstant = 0.3; // Smoother animation
             this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
 
-            // Setup Visualization Analysers (4 slots)
-            for (let i = 0; i < 4; i++) {
+            // Setup Visualization Analysers (16 slots)
+            for (let i = 0; i < 16; i++) {
                 const visAnalyser = this.context.createAnalyser();
                 visAnalyser.fftSize = 1024;
                 visAnalyser.smoothingTimeConstant = 0.1; // Fast response for individual hits
@@ -298,10 +299,10 @@ export class AudioManager {
 
         if (this.visAnalysers.length === 0) {
             // Fallback if not init
-            return [new Float32Array(targetSize), new Float32Array(targetSize), new Float32Array(targetSize), new Float32Array(targetSize)];
+            return Array(16).fill(new Float32Array(targetSize));
         }
 
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < 16; i++) {
             const analyser = this.visAnalysers[i];
             const data = this.visDataArrays[i];
 

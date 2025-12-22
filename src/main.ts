@@ -282,6 +282,13 @@ function triggerVoice(padId: string, velocity: number = 1.0) {
     btn.classList.add('active');
     setTimeout(() => btn.classList.remove('active'), 80);
   }
+
+  // Visualizer Trigger (Spring Physics)
+  const padNum = parseInt(padId.replace('pad', ''), 10);
+  if (!isNaN(padNum)) {
+    // efficient mapping: pad1 -> index 0
+    visualizer.trigger(padNum - 1, velocity);
+  }
 }
 
 // --- MIDI Handling ---
