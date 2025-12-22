@@ -3,7 +3,7 @@ import * as THREE from 'three';
 
 export class ThreeVisualizer {
     private scene: THREE.Scene;
-    private camera: THREE.PerspectiveCamera;
+    private camera: THREE.OrthographicCamera;
     private renderer: THREE.WebGLRenderer;
     // composer removed
 
@@ -24,10 +24,21 @@ export class ThreeVisualizer {
     // Data Source
     private dataProvider: (() => Float32Array[]) | null = null;
 
+    private frustumSize = 10; // Zoom level control
+
     constructor() {
         this.scene = new THREE.Scene();
-        // Camera setup for 3D perspective of the grid
-        this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        // ISOMETRIC SETUP
+        const aspect = window.innerWidth / window.innerHeight;
+        this.camera = new THREE.OrthographicCamera(
+            this.frustumSize * aspect / -2,
+            this.frustumSize * aspect / 2,
+            this.frustumSize / 2,
+            this.frustumSize / -2,
+            1,
+            1000
+        );
 
         // Setup Renderer
         this.renderer = new THREE.WebGLRenderer({
@@ -37,8 +48,8 @@ export class ThreeVisualizer {
         this.renderer.setSize(300, 150);
         this.renderer.setPixelRatio(window.devicePixelRatio);
 
-        // Position Camera to view the 4x4 grid centered
-        this.camera.position.set(0, 0, 7);
+        // Isometric Position: Equal X, Y, Z
+        this.camera.position.set(10, 10, 10);
         this.camera.lookAt(0, 0, 0);
 
         this.initWaveforms();
@@ -220,7 +231,14 @@ export class ThreeVisualizer {
     }
 
     resize(width: number, height: number) {
-        this.camera.aspect = width / height;
+        const aspect = width / height;
+
+        // Update Orthographic Frustum
+        this.camera.left = -this.frustumSize * aspect / 2;
+        this.camera.right = this.frustumSize * aspect / 2;
+        this.camera.top = this.frustumSize / 2;
+        this.camera.bottom = -this.frustumSize / 2;
+
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);
     }
