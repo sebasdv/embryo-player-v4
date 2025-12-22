@@ -458,3 +458,16 @@ body {
   border: none;
   cursor: pointer;
 }
+
+/* Added Select Styles */
+select {
+  cursor: pointer;
+  font-family: inherit;
+  border: 1px solid black;
+  padding: 5px;
+}
+
+select:hover {
+  background-color: #f0f0f0;
+  border-color: #333;
+}
