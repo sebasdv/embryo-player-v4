@@ -69,7 +69,7 @@ app.innerHTML = `
             <div class="action-controls">
                 <button id="btn-load" class="action-btn">LOAD</button>
                 <button id="btn-clear" class="action-btn">CLR</button>
-                <button id="btn-help" class="action-btn">HELP</button>
+                <button id="btn-help" class="action-btn">?</button>
             </div>
             
             <div class="bpm-controls">
