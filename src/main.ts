@@ -25,6 +25,42 @@ app.innerHTML = `
     <!-- Hidden File Input for Kit Loading -->
     <input type="file" id="kit-input" multiple accept="audio/*" style="display: none;" />
 
+    <!-- Help Modal (Hidden) -->
+    <div id="help-modal" style="display: none;">
+        <div class="modal-content">
+            <button id="btn-help-close" class="close-btn">X</button>
+            <h2>SYSTEM MANUAL</h2>
+            
+            <div class="manual-section">
+                <h3>MIDI MAPPING (NOTE ON)</h3>
+                <div class="data-table">
+                    <span>PAD 1-4:</span> <span>48 - 51 (C3-D#3)</span>
+                    <span>PAD 5-8:</span> <span>52 - 55 (E3-G3)</span>
+                    <span>PAD 9-12:</span> <span>56 - 59 (G#3-B3)</span>
+                    <span>PAD 13-16:</span> <span>60 - 63 (C4-D#4)</span>
+                </div>
+            </div>
+
+            <div class="manual-section">
+                <h3>MIDI CC (KNOBS)</h3>
+                <div class="data-table">
+                    <span>CUTOFF:</span> <span>CC 24</span>
+                    <span>RES:</span> <span>CC 25</span>
+                    <span>DIST:</span> <span>CC 26</span>
+                    <span>VOL:</span> <span>CC 27</span>
+                </div>
+            </div>
+
+            <div class="manual-section">
+                <h3>KEYBOARD</h3>
+                <div class="data-table">
+                    <span>PAD 1-4:</span> <span>Z, X, C, V</span>
+                    <span>Others:</span> <span>Map via Settings (WIP)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Interface (Hidden Initially) -->
     <div id="main-interface" style="display: none; width: 100%; height: 100%; flex-direction: column;">
         
@@ -33,6 +69,7 @@ app.innerHTML = `
             <div class="action-controls">
                 <button id="btn-load" class="action-btn">LOAD</button>
                 <button id="btn-clear" class="action-btn">CLR</button>
+                <button id="btn-help" class="action-btn">HELP</button>
             </div>
             
             <div class="bpm-controls">
@@ -413,6 +450,23 @@ function setupActionControls() {
       await persistence.clear();
       document.querySelectorAll('.drum-pad').forEach(el => el.classList.remove('loaded'));
     }
+  });
+
+  // Help Modal Logic
+  const btnHelp = document.getElementById('btn-help');
+  const helpModal = document.getElementById('help-modal');
+  const btnHelpClose = document.getElementById('btn-help-close');
+
+  btnHelp?.addEventListener('click', () => {
+    if (helpModal) helpModal.style.display = 'flex';
+  });
+
+  btnHelpClose?.addEventListener('click', () => {
+    if (helpModal) helpModal.style.display = 'none';
+  });
+
+  helpModal?.addEventListener('click', (e) => {
+    if (e.target === helpModal) helpModal.style.display = 'none';
   });
 }
 
