@@ -135,6 +135,17 @@ startOverlay.addEventListener('click', async () => {
     await audioManager.init();
     audioManager.setBpm(currentBpm);
 
+    // Visual Metronome Handler
+    audioManager.setWorkletCallback((msg) => {
+      if (msg.type === 'BEAT') {
+        if (bpmDisplay) {
+          bpmDisplay.classList.remove('beat-pulse');
+          void bpmDisplay.offsetWidth; // Trigger reflow
+          bpmDisplay.classList.add('beat-pulse');
+        }
+      }
+    });
+
     // 4. Visualizer Integration
     const visContainer = document.querySelector('#visualizer-container') as HTMLDivElement;
     if (visContainer) {

@@ -109,19 +109,17 @@ class MainProcessor extends AudioWorkletProcessor {
             }
         }
 
-        // 1. Metronome Logic (Independent of Transport)
-        if (this.isMetronomeEnabled) {
-            for (let i = 0; i < bufferSize; i++) {
-                this.nextClickCountdown--;
-                if (this.nextClickCountdown <= 0) {
-                    this.triggerMetronome();
-                    this.nextClickCountdown = this.samplesPerBeat;
-                }
+        // 1. Clock Logic (Always Running)
+        for (let i = 0; i < bufferSize; i++) {
+            this.nextClickCountdown--;
+            if (this.nextClickCountdown <= 0) {
+                this.triggerMetronome();
+                this.nextClickCountdown = this.samplesPerBeat;
             }
         }
 
         // 2. Metronome Sound Generation (Mix Only)
-        if (this.metronomePhase > 0) {
+        if (this.isMetronomeEnabled && this.metronomePhase > 0) {
             for (let i = 0; i < bufferSize; i++) {
                 if (this.metronomePhase > 0) {
                     // Simple Sine Sweep
@@ -199,6 +197,9 @@ class MainProcessor extends AudioWorkletProcessor {
 
     triggerMetronome() {
         this.metronomePhase = 3000; // Reset length
+
+        // Notify Main Thread (for Visuals)
+        this.port.postMessage({ type: 'BEAT', payload: this.currentBeat });
 
         if (this.currentBeat === 0) {
             // Strong Beat (High Pitch, Louder)
