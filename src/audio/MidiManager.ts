@@ -6,6 +6,12 @@ export class MidiManager {
 
     private noteOnCallback: ((note: number, velocity: number) => void) | null = null;
     private ccCallback: ((cc: number, value: number) => void) | null = null;
+    private bpmCallback: ((bpm: number) => void) | null = null;
+
+    // Clock State
+    private lastTickTime: number = 0;
+    private tickCount: number = 0;
+    private tickIntervals: number[] = [];
 
     constructor() { }
 
@@ -48,6 +54,10 @@ export class MidiManager {
         this.ccCallback = callback;
     }
 
+    setBpmCallback(callback: (bpm: number) => void) {
+        this.bpmCallback = callback;
+    }
+
     sendCC(cc: number, value: number) {
         if (!this.midiAccess) return;
 
@@ -65,26 +75,88 @@ export class MidiManager {
 
     private onMidiMessage(event: any) {
         const data = event.data;
-        if (!data || data.length < 3) return;
+        if (!data || data.length === 0) return;
 
-        const cmd = data[0] & 0xf0; // Mask channel
+        const cmd = data[0];
+
+        // --- Realtime Messages (System Realtime) ---
+        if (cmd === 0xF8) { // Timing Clock
+            this.handleClockTick();
+            return;
+        }
+
+        if (cmd === 0xFA || cmd === 0xFB || cmd === 0xFC) {
+            // Start, Continue, Stop - could handle transport here
+            return;
+        }
+
+        if (data.length < 3) return;
+
+        const status = data[0] & 0xf0; // Mask channel
         const byte1 = data[1];
         const byte2 = data[2];
 
         // Note On (144 / 0x90)
-        if (cmd === 144 && byte2 > 0) {
+        if (status === 144 && byte2 > 0) {
             if (this.noteOnCallback) {
                 this.noteOnCallback(byte1, byte2); // note, velocity
             }
         }
         // Note Off (128 / 0x80)
-        else if (cmd === 128 || (cmd === 144 && byte2 === 0)) {
+        else if (status === 128 || (status === 144 && byte2 === 0)) {
             // Optional: Handle Note Off
         }
         // Control Change (176 / 0xB0)
-        else if (cmd === 176) {
+        else if (status === 176) {
             if (this.ccCallback) {
                 this.ccCallback(byte1, byte2); // cc, value
+            }
+        }
+    }
+
+    private handleClockTick() {
+        // MIDI Clock sends 24 pulses per quarter note (PPQ).
+        const now = performance.now();
+
+        if (this.lastTickTime > 0) {
+            const delta = now - this.lastTickTime;
+            this.tickIntervals.push(delta);
+
+            // Keep window small for responsiveness (e.g., 24 ticks = 1 beat)
+            if (this.tickIntervals.length > 24) {
+                this.tickIntervals.shift();
+            }
+        }
+
+        this.lastTickTime = now;
+        this.tickCount++;
+
+        // Update BPM every 24 ticks (every quarter note)
+        if (this.tickCount % 24 === 0) {
+            this.calculateBpm();
+        }
+    }
+
+    private calculateBpm() {
+        if (this.tickIntervals.length < 24) return;
+
+        // Average interval
+        const sum = this.tickIntervals.reduce((a, b) => a + b, 0);
+        const avgInterval = sum / this.tickIntervals.length;
+
+        // BPM = 60000 ms / (interval * 24)
+        const rawBpm = 60000 / (avgInterval * 24);
+
+        // Round to 1 decimal place or integer
+        const smoothedBpm = Math.round(rawBpm * 10) / 10;
+
+        // Debounce / Check threshold to avoid UI jitter
+        // Only update if change is significant (> 0.5 BPM) or enough time passed
+        // For now, let's just callback.
+        if (this.bpmCallback) {
+            // Clamp reasonable values
+            if (smoothedBpm >= 30 && smoothedBpm <= 300) {
+                this.bpmCallback(Math.round(smoothedBpm));
             }
         }
     }

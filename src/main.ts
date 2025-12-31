@@ -216,6 +216,13 @@ startOverlay.addEventListener('click', async () => {
       if (await midiManager.init()) {
         midiManager.setNoteOnCallback(handleMidiNote);
         midiManager.setCcCallback(handleMidiCC);
+        midiManager.setBpmCallback((bpm) => {
+          if (bpm !== currentBpm) {
+            currentBpm = bpm;
+            if (bpmDisplay) bpmDisplay.textContent = currentBpm.toString().padStart(3, '0');
+            audioManager.setBpm(currentBpm);
+          }
+        });
       }
     } catch (err) {
       console.warn('[System] MIDI Init failed', err);
