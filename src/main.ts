@@ -74,6 +74,7 @@ app.innerHTML = `
             
             <div class="bpm-controls">
                 <button id="btn-tap" class="bpm-btn" style="width: auto; padding: 0 10px; margin-right: 5px; font-size: 0.8rem; font-weight: 800;">TAP</button>
+                <button id="btn-tx" class="bpm-btn" style="width: auto; padding: 0 10px; margin-right: 5px; font-size: 0.8rem; font-weight: 800; opacity: 0.5;">TX</button>
                 <button id="bpm-minus" class="bpm-btn">-</button>
                 <span id="bpm-display" style="min-width: 3.5rem; text-align: center;">120</span>
                 <button id="bpm-plus" class="bpm-btn">+</button>
@@ -180,6 +181,8 @@ startOverlay.addEventListener('click', async () => {
           void bpmDisplay.offsetWidth; // Trigger reflow
           bpmDisplay.classList.add('beat-pulse');
         }
+      } else if (msg.type === 'CLOCK_TICK') {
+        if (audioManager.onClockTick) audioManager.onClockTick();
       }
     });
 
@@ -410,10 +413,11 @@ function setupBpmControls() {
   btnMinus.addEventListener('click', () => updateBpm(-1));
   btnPlus.addEventListener('click', () => updateBpm(1));
 
-  // --- TAP TEMPO LOGIC ---
+  /* TAP TEMPO LOGIC */
   let tapTimes: number[] = [];
 
   btnTap?.addEventListener('click', () => {
+    // ... (existing tap logic)
     const now = Date.now();
     if (tapTimes.length > 0 && now - tapTimes[tapTimes.length - 1] > 2000) {
       tapTimes = [];
@@ -431,8 +435,24 @@ function setupBpmControls() {
       const bpm = Math.round(60000 / avgInterval);
       updateBpm(0, bpm);
     }
-    // No text change, color is handled by CSS :active
   });
+
+  // --- TX CLOCK LOGIC ---
+  const btnTx = document.querySelector('#btn-tx') as HTMLButtonElement;
+  let isTxEnabled = false;
+
+  btnTx?.addEventListener('click', () => {
+    isTxEnabled = !isTxEnabled;
+    btnTx.style.opacity = isTxEnabled ? '1' : '0.5';
+    btnTx.style.color = isTxEnabled ? 'var(--accent-color)' : 'inherit';
+  });
+
+  // Wire Clock
+  audioManager.onClockTick = () => {
+    if (isTxEnabled) {
+      midiManager.sendClockTick();
+    }
+  };
 }
 
 function setupActionControls() {

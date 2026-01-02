@@ -34,6 +34,9 @@ class MainProcessor extends AudioWorkletProcessor {
     private nextClickCountdown: number = 0;
     private samplesPerBeat: number = 0;
 
+    // MIDI Clock Timing
+    private ticksUntilNextClock: number = 0;
+
 
 
     constructor() {
@@ -110,11 +113,21 @@ class MainProcessor extends AudioWorkletProcessor {
         }
 
         // 1. Clock Logic (Always Running)
+        // 24 PPQ Logic
         for (let i = 0; i < bufferSize; i++) {
             this.nextClickCountdown--;
+
+            // Metronome (Quarter Note) Logic
             if (this.nextClickCountdown <= 0) {
                 this.triggerMetronome();
                 this.nextClickCountdown = this.samplesPerBeat;
+            }
+
+            // MIDI Clock (24 PPQ) Logic
+            this.ticksUntilNextClock--;
+            if (this.ticksUntilNextClock <= 0) {
+                this.port.postMessage({ type: 'CLOCK_TICK' });
+                this.ticksUntilNextClock = this.samplesPerBeat / 24;
             }
         }
 

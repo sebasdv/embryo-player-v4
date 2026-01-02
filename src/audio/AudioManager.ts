@@ -20,6 +20,8 @@ export class AudioManager {
     private recordedChunks: Blob[] = [];
     private isRecording: boolean = false;
 
+    public onClockTick: (() => void) | null = null;
+
     constructor() {
     }
 

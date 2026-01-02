@@ -73,6 +73,20 @@ export class MidiManager {
         });
     }
 
+    sendClockTick() {
+        if (!this.midiAccess) return;
+
+        // 0xF8 = Timing Clock
+        const msg = [0xF8];
+        this.midiAccess.outputs.forEach((output: any) => {
+            try {
+                output.send(msg);
+            } catch (err) {
+                // Ignore
+            }
+        });
+    }
+
     private onMidiMessage(event: any) {
         const data = event.data;
         if (!data || data.length === 0) return;
