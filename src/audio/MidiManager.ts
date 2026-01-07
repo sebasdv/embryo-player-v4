@@ -110,6 +110,9 @@ export class MidiManager {
         const byte1 = data[1];
         const byte2 = data[2];
 
+        // Debug Log
+        console.log(`[MIDI IN] cmd: ${status}, note: ${byte1}, velocity: ${byte2}`);
+
         // Note On (144 / 0x90)
         if (status === 144 && byte2 > 0) {
             if (this.noteOnCallback) {
