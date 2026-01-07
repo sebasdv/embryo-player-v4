@@ -1,8 +1,7 @@
-
 declare const sampleRate: number;
 
 interface AudioMessage {
-    type: 'TOGGLE_TONE' | 'LOAD_SAMPLE' | 'PLAY_SAMPLE' | 'SET_BPM' | 'TOGGLE_METRONOME' | 'LOG';
+    type: 'TOGGLE_TONE' | 'LOAD_SAMPLE' | 'PLAY_SAMPLE' | 'SET_BPM' | 'TOGGLE_METRONOME' | 'LOG' | 'SET_CHOKE_GROUP';
     payload: any;
 }
 
@@ -65,6 +64,10 @@ class MainProcessor extends AudioWorkletProcessor {
                     this.nextClickCountdown = 0; // Start immediately
                     this.currentBeat = 0; // Reset bar
                 }
+            } else if (msg.type === 'SET_CHOKE_GROUP') {
+                const { id, group } = msg.payload;
+                this.chokeGroups.set(id, group);
+                this.port.postMessage({ type: 'LOG', payload: `[Worklet] Choke Group ${group} set for ${id}` });
             }
         };
     }
@@ -74,8 +77,24 @@ class MainProcessor extends AudioWorkletProcessor {
         this.samplesPerBeat = (sampleRate * 60) / this.bpm;
     }
 
+    // Choke Groups Config
+    private chokeGroups: Map<string, number> = new Map();
+
     triggerVoice(id: string, velocity: number = 1.0) {
         if (this.sampleBuffers.has(id)) {
+            // 1. Choke Logic
+            const group = this.chokeGroups.get(id);
+            if (group !== undefined) {
+                // Stop any playing voice in the same group
+                for (const voice of this.activeVoices) {
+                    if (voice.isPlaying && this.chokeGroups.get(voice.sampleId) === group) {
+                        voice.isPlaying = false;
+                        // Optional: Fade out quickly (e.g. 5ms) instead of hard cut to avoid pops
+                        // For low latency drums, hard cut is standard for choke.
+                    }
+                }
+            }
+
             // Direct Map: pad1 -> slot 0, pad16 -> slot 15
             // Parsing "padX"
             const padNum = parseInt(id.replace('pad', ''), 10);

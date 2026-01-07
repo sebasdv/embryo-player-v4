@@ -98,6 +98,25 @@ export class AudioManager {
                 }
             };
 
+            // --- Default Choke Groups ---
+            // Group 1: 13, 14, 15, 16
+            this.setChokeGroup('pad13', 1);
+            this.setChokeGroup('pad14', 1);
+            this.setChokeGroup('pad15', 1);
+            this.setChokeGroup('pad16', 1);
+
+            // Group 2: 9, 10, 11, 12
+            this.setChokeGroup('pad9', 2);
+            this.setChokeGroup('pad10', 2);
+            this.setChokeGroup('pad11', 2);
+            this.setChokeGroup('pad12', 2);
+
+            // Group 3: 3, 4, 7, 8
+            this.setChokeGroup('pad3', 3);
+            this.setChokeGroup('pad4', 3);
+            this.setChokeGroup('pad7', 3);
+            this.setChokeGroup('pad8', 3);
+
         } catch (error) {
             console.error('[AudioManager] Initialization failed:', error);
             throw error;
@@ -255,6 +274,15 @@ export class AudioManager {
             this.workletNode.port.postMessage({
                 type: 'PLAY_SAMPLE',
                 payload: { id: id, velocity: velocity }
+            });
+        }
+    }
+
+    setChokeGroup(id: string, group: number) {
+        if (this.workletNode) {
+            this.workletNode.port.postMessage({
+                type: 'SET_CHOKE_GROUP',
+                payload: { id, group }
             });
         }
     }
