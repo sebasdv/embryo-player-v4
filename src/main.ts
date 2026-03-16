@@ -44,10 +44,10 @@ app.innerHTML = `
             <div class="manual-section">
                 <h3>MIDI CC (KNOBS)</h3>
                 <div class="data-table">
-                    <span>CUTOFF:</span> <span>CC 24</span>
-                    <span>RES:</span> <span>CC 25</span>
-                    <span>DIST:</span> <span>CC 26</span>
-                    <span>VOL:</span> <span>CC 27</span>
+                    <span>CUTOFF:</span> <span>CC 20</span>
+                    <span>RES:</span> <span>CC 21</span>
+                    <span>DIST:</span> <span>CC 22</span>
+                    <span>VOL:</span> <span>CC 23</span>
                 </div>
             </div>
 
@@ -358,19 +358,19 @@ function handleMidiNote(note: number, velocity: number) {
 }
 
 function handleMidiCC(cc: number, value: number) {
-  // CC 24: Cutoff, 25: Res, 26: Dist, 27: Vol
+  // CC 20: Cutoff, 21: Res, 22: Dist, 23: Vol
   const normalized = (value / 127) * 100;
 
-  if (cc === 24) {
+  if (cc === 20) {
     const input = document.getElementById('fx-cutoff') as HTMLInputElement;
     if (input) { input.value = normalized.toString(); input.dispatchEvent(new Event('input')); }
-  } else if (cc === 25) {
+  } else if (cc === 21) {
     const input = document.getElementById('fx-res') as HTMLInputElement;
     if (input) { input.value = normalized.toString(); input.dispatchEvent(new Event('input')); }
-  } else if (cc === 26) {
+  } else if (cc === 22) {
     const input = document.getElementById('fx-dist') as HTMLInputElement;
     if (input) { input.value = normalized.toString(); input.dispatchEvent(new Event('input')); }
-  } else if (cc === 27) {
+  } else if (cc === 23) {
     const input = document.getElementById('fx-vol') as HTMLInputElement;
     if (input) { input.value = normalized.toString(); input.dispatchEvent(new Event('input')); }
   }
