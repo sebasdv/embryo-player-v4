@@ -6,8 +6,10 @@ import { PersistenceManager } from './system/PersistenceManager'
 
 // --- Constants & Defaults ---
 const DEFAULT_KEY_MAP: Record<string, string> = {
-  'z': 'pad1', 'x': 'pad2', 'c': 'pad3', 'v': 'pad4'
-  // Can be extended here
+  'z': 'pad1',  'x': 'pad2',  'c': 'pad3',  'v': 'pad4',
+  'a': 'pad5',  's': 'pad6',  'd': 'pad7',  'f': 'pad8',
+  'q': 'pad9',  'w': 'pad10', 'e': 'pad11', 'r': 'pad12',
+  '1': 'pad13', '2': 'pad14', '3': 'pad15', '4': 'pad16'
 };
 
 // --- HTML Structure ---
@@ -55,7 +57,9 @@ app.innerHTML = `
                 <h3>KEYBOARD</h3>
                 <div class="data-table">
                     <span>PAD 1-4:</span> <span>Z, X, C, V</span>
-                    <span>Others:</span> <span>Map via Settings (WIP)</span>
+                    <span>PAD 5-8:</span> <span>A, S, D, F</span>
+                    <span>PAD 9-12:</span> <span>Q, W, E, R</span>
+                    <span>PAD 13-16:</span> <span>1, 2, 3, 4</span>
                 </div>
             </div>
         </div>
